@@ -20,7 +20,7 @@ client.on("messageUpdate", (oldMessage, newMessage) => {
     if (deletedMessages.length == suslogLength)
         deletedMessages.shift();
 
-    if (!oldMessage.author.bot)
+    if (!oldMessage.author.bot && oldMessage.content != newMessage.content)
         deletedMessages.push(oldMessage);
 });
 
@@ -32,13 +32,17 @@ client.on("message", message => {
     const command = args.shift().toLowerCase();
 
     if (command == "suslog") {
-        var logLength = 10;
-        if (Number(args[0]))
+        var logLength;
+	if (!args[0])
+	    logLength = 10;
+	else if (Number(args[0]))
             logLength = Number(args[0]);
+	else if (args[0].toLowerCase() == "last")
+	    logLength = 1;
         if (deletedMessages.length <= logLength)
             logLength = deletedMessages.length;
         var outgoingMsg = "Bringing out the log of *sus*:\n\n";
-        for (var i = 0; i < logLength; i++) {
+        for (var i = deletedMessages.length - 1; i > deletedMessages.length - logLength - 1; i--) {
             var susMsg = "On " + deletedMessages[i].createdAt.toLocaleString("en-US") + ", <@" + deletedMessages[i].author + "> wrote: *" + deletedMessages[i].content + "*\n";
             //console.log("susMsg length: " + susMsg.length);
             if (susMsg.length + outgoingMsg.length <= 2000) {
