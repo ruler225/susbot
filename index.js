@@ -1,15 +1,17 @@
 const Discord = require("discord.js");
 const config = require("./config.json");
+const strings = require("./en.json");
 var deletedMessages = [];
-const suslogLength = 20;
+const MAX_SUS_LOG_LENGTH = 20;
+const DEFAULT_SUS_LOG_LENGTH = 10;
 
 const client = new Discord.Client();
 client.login(config.BOT_TOKEN);
-const prefix = "!";
+const prefix = strings.commands.suslog.prefix;  //!
 
 
 client.on("messageDelete", message => {
-    if (deletedMessages.length == suslogLength)
+    if (deletedMessages.length == MAX_SUS_LOG_LENGTH)
         deletedMessages.shift();
     
     if (!message.author.bot)
@@ -17,7 +19,7 @@ client.on("messageDelete", message => {
 });
 
 client.on("messageUpdate", (oldMessage, newMessage) => {
-    if (deletedMessages.length == suslogLength)
+    if (deletedMessages.length == MAX_SUS_LOG_LENGTH)
         deletedMessages.shift();
 
     if (!oldMessage.author.bot && oldMessage.content != newMessage.content)
@@ -27,42 +29,72 @@ client.on("messageUpdate", (oldMessage, newMessage) => {
 client.on("message", message => {
     if (message.author.bot || !message.content.startsWith(prefix)) return;
 
-    const commandBody = message.content.slice(prefix.length);
-    const args = commandBody.split(' ');
-    const command = args.shift().toLowerCase();
+    const commandBody = message.content.slice(prefix.length);   // Remove prefix
+    const args = commandBody.split(' ');                        // Get array of commands + opts
+    const command = args.shift().toLowerCase();                 // Extract command
 
-    if (command == "suslog") {
-        var logLength;
-	if (!args[0])
-	    logLength = 10;
-	else if (Number(args[0]))
-            logLength = Number(args[0]);
-	else if (args[0].toLowerCase() == "last")
-	    logLength = 1;
-        if (deletedMessages.length <= logLength)
-            logLength = deletedMessages.length;
-        var outgoingMsg = "Bringing out the log of *sus*:\n\n";
-        for (var i = deletedMessages.length - 1; i > deletedMessages.length - logLength - 1; i--) {
-            var susMsg = "On " + deletedMessages[i].createdAt.toLocaleString("en-US") + ", <@" + deletedMessages[i].author + "> wrote: *" + deletedMessages[i].content + "*\n";
-            //console.log("susMsg length: " + susMsg.length);
-            if (susMsg.length + outgoingMsg.length <= 2000) {
-                outgoingMsg += susMsg;
-                //console.log(outgoingMsg);
-            }
-        }
-        if (deletedMessages.length == 0)
-            outgoingMsg = "Hmmmmm... I haven't seen any suspicious activity yet. Good job.... for now...";
-        else if (deletedMessages.length > logLength)
-            outgoingMsg += "\nThere are also " + (deletedMessages.length - logLength) + " more messages that you can view. To specify the number of messages you'd like to see, use `" + prefix + "suslog <num>`";
-        message.channel.send(outgoingMsg);
+    let outgoingMsg = "";   // Placeholder for outgoing message
 
+    // Check commands
+    switch(command) {
+        case strings.commands.suslog.name:
+            outgoingMsg = bringOutSuslog(args);
+            message.channel.send(outgoingMsg)  // Send outgoing message
+            break;
+        default:
+            // Do nothing
     }
 });
 
 process.on('unhandledRejection', (reason, p) => {
     console.error(reason);	
     process.exit(-1);
-  });
+});
 
+
+/**
+ * Brings out the suslog and computes the outgoing message
+ * @param {string[]} args List of arguments for suslog command
+ * @returns Outgoing message to display
+ */
+function bringOutSuslog(args) {
+    let logLength = DEFAULT_SUS_LOG_LENGTH;     // set default log length
+    let userFilter = (a) => true;               // allow for all users as default
+
+    while(args.length > 0) {
+        let arg = args.shift();
+
+        if(arg === strings.commands.suslog.arguments.help) {
+            return strings.commands.suslog.usage;
+        } else if(arg.startsWith('@')) {
+            // Set the filter for a specific user
+            const username = arg.slice(1);      // remove '@'
+            userFilter = (msg) => msg.author === username;  // Set filter
+        } else if(arg === strings.commands.suslog.arguments.last) {
+            logLength = 1;  // Set log length to only return last log
+        } else if(Number(arg) && Number(arg) > 0 && Number(arg) <= MAX_SUS_LOG_LENGTH) {
+            logLength = Number(arg);    // Set log length to return desired number of messages
+        }
+    }
+    // Set outgoing message
+    let outgoingMessage = strings.commands.suslog.messages.bringOutLog;
+    // Copy deleted messages and reverse to get in most recent order
+    let messages = deletedMessage.slice().reverse();
+    // Filter by user, if any
+    messages = messages.filter(userFilter);
+    // Compile outgoing message
+    for (var i = 0; i < logLength && i < messages.length; i++) {
+        var susMsg = "On " + messages[i].createdAt.toLocaleString("en-US") + ", <@" + messages[i].author + "> wrote: *" + messages[i].content + "*\n";
+        if (susMsg.length + outgoingMessage.length <= 2000) {
+            outgoingMessage += susMsg;
+        }
+    }
+    if (messages.length == 0)
+        outgoingMessage = strings.commands.suslog.messages.noSusActivity;
+    else if (deletedMessages.length > Math.min(logLength, messages.length))
+        outgoingMessage += "\nThere are also " + (deletedMessages.length - Math.min(logLength, messages.length)) + " more messages that you can view. To specify the number of messages you'd like to see, use `" + prefix + "suslog <num>`";
+
+    return outgoingMessage;
+}
 
 

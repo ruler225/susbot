@@ -1,0 +1,18 @@
+{
+    "commands": {
+        "suslog": {
+            "name": "suslog",
+            "prefix": "!",
+            "arguments": {
+                "help": "help",
+                "last": "last"
+            },
+            "messages": {
+                "bringOutLog": "Bringing out the log of *sus*:\n\n",
+                "noSusActivity": "Hmmmmm... I haven't seen any suspicious activity yet. Good job.... for now..."
+            },
+            "usage": "Usage: !suslog [@user] [number | last] [help]\n[@user]\t\tFilter the suslog by user.\n[number | last]\tSpecify the number of messages to retrieve, or retrieve the last message.\n[help]\t\tDisplay this usage message."
+        },
+        "default": "Hmmmm, I'm not sure what your trying to do."
+    }
+}
