@@ -38,7 +38,7 @@ client.on("message", message => {
     // Check commands
     switch(command) {
         case strings.commands.suslog.name:
-            outgoingMsg = bringOutSuslog(args);
+            outgoingMsg = bringOutSuslog(message, args);
             message.channel.send(outgoingMsg)  // Send outgoing message
             break;
         default:
@@ -57,7 +57,7 @@ process.on('unhandledRejection', (reason, p) => {
  * @param {string[]} args List of arguments for suslog command
  * @returns Outgoing message to display
  */
-function bringOutSuslog(args) {
+function bringOutSuslog(message, args) {
     let logLength = DEFAULT_SUS_LOG_LENGTH;     // set default log length
     let userFilter = (a) => true;               // allow for all users as default
 
@@ -66,20 +66,21 @@ function bringOutSuslog(args) {
 
         if(arg === strings.commands.suslog.arguments.help) {
             return strings.commands.suslog.usage;
-        } else if(arg.startsWith('@')) {
-            // Set the filter for a specific user
-            const username = arg.slice(1);      // remove '@'
-            userFilter = (msg) => msg.author === username;  // Set filter
         } else if(arg === strings.commands.suslog.arguments.last) {
             logLength = 1;  // Set log length to only return last log
         } else if(Number(arg) && Number(arg) > 0 && Number(arg) <= MAX_SUS_LOG_LENGTH) {
             logLength = Number(arg);    // Set log length to return desired number of messages
         }
     }
+    if(message.mentions.users) {
+        // Set the filter for a specific user
+        const users = message.mentions.users      //Get the Collection of users from the message
+        userFilter = (msg) => users.has(msg.author.id);  // Set filter
+    } 
     // Set outgoing message
     let outgoingMessage = strings.commands.suslog.messages.bringOutLog;
     // Copy deleted messages and reverse to get in most recent order
-    let messages = deletedMessage.slice().reverse();
+    let messages = deletedMessages.slice().reverse();
     // Filter by user, if any
     messages = messages.filter(userFilter);
     // Compile outgoing message
