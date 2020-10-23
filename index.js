@@ -14,16 +14,20 @@ client.on("messageDelete", message => {
     if (deletedMessages.length == MAX_SUS_LOG_LENGTH)
         deletedMessages.shift();
     
-    if (!message.author.bot)
+    if (!message.author.bot) {
         deletedMessages.push(message);
+	client.user.setActivity(deletedMessages.length + " messages in the Suslog.", {type: 'WATCHING'});
+    }
 });
 
 client.on("messageUpdate", (oldMessage, newMessage) => {
     if (deletedMessages.length == MAX_SUS_LOG_LENGTH)
         deletedMessages.shift();
 
-    if (!oldMessage.author.bot && oldMessage.content != newMessage.content)
+    if (!oldMessage.author.bot && oldMessage.content != newMessage.content) {
         deletedMessages.push(oldMessage);
+	client.user.setActivity(deletedMessages.length + " messages in the Suslog.", {type: 'WATCHING'});
+    }
 });
 
 client.on("message", message => {
@@ -72,7 +76,7 @@ function bringOutSuslog(message, args) {
             logLength = Number(arg);    // Set log length to return desired number of messages
         }
     }
-    if(message.mentions.users) {
+    if(message.mentions.users.size > 0) {
         // Set the filter for a specific user
         const users = message.mentions.users      //Get the Collection of users from the message
         userFilter = (msg) => users.has(msg.author.id);  // Set filter
