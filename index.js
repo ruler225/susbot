@@ -26,6 +26,7 @@ client.on("messageUpdate", (oldMessage, newMessage) => {
 
     if (!oldMessage.author.bot && oldMessage.content != newMessage.content) {
         deletedMessages.push(oldMessage);
+	newMessage.react('👀');
 	client.user.setActivity(deletedMessages.length + " messages in the Suslog.", {type: 'WATCHING'});
     }
 });
