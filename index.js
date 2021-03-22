@@ -97,9 +97,11 @@ function bringOutSuslog(message, args) {
     }
     if (messages.length == 0)
         outgoingMessage = strings.commands.suslog.messages.noSusActivity;
-    else if (deletedMessages.length > Math.min(logLength, messages.length))
-        outgoingMessage += "\nThere are also " + (deletedMessages.length - Math.min(logLength, messages.length)) + " more messages that you can view. To specify the number of messages you'd like to see, use `" + prefix + "suslog <num>`";
-
+    else if (deletedMessages.length > Math.min(logLength, messages.length)) {
+        let moreMsgStr = "\nThere are also " + (deletedMessages.length - Math.min(logLength, messages.length)) + " more messages that you can view. To specify the number of messages you'd like to see, use `" + prefix + "suslog <num>`";
+	if (moreMsgStr.length + outgoingMessage.length <= 2000)
+	    outgoingMessage += moreMsgStr;
+	}
     return outgoingMessage;
 }
 
